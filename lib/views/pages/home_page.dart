@@ -1,128 +1,138 @@
 import 'package:flutter/material.dart';
 
+import '../../viewmodel/focus_viewmodel.dart';
+import 'focus_page.dart';
+import 'stats_page.dart';
+
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  final FocusViewModel viewModel;
+
+  const HomePage({
+    super.key,
+    required this.viewModel,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'FocusGuard',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+    return AnimatedBuilder(
+      animation: viewModel,
+      builder: (BuildContext context, Widget? child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              'FocusGuard',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            elevation: 0,
+            backgroundColor: Colors.white,
           ),
-        ),
-        elevation: 0,
-        backgroundColor: Colors.white,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Sección de bienvenida
-            Text(
-              'Hola, bienvenido',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Mejora tu concentración detectando cuando abandonas tu sesión',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
-            const SizedBox(height: 40),
+          body: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hola, bienvenido',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Mejora tu concentración detectando cuando abandonas tu sesión',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                ),
+                const SizedBox(height: 40),
 
-            // Estadísticas rápidas
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _StatItem(
-                    label: 'Sesiones',
-                    value: '0',
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue.shade200),
                   ),
-                  _StatItem(
-                    label: 'Combo actual',
-                    value: '0',
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _StatItem(
+                        label: 'Sesiones',
+                        value: viewModel.stats.totalSessions.toString(),
+                      ),
+                      _StatItem(
+                        label: 'Combo actual',
+                        value: viewModel.stats.currentCombo.toString(),
+                      ),
+                      _StatItem(
+                        label: 'Tiempo total',
+                        value: viewModel.formatTotalFocusTime(),
+                      ),
+                    ],
                   ),
-                  _StatItem(
-                    label: 'Tiempo hoy',
-                    value: '0m',
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 40),
+                ),
+                const SizedBox(height: 40),
 
-            // Título de opciones
-            Text(
-              'Opciones',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-            ),
-            const SizedBox(height: 16),
+                Text(
+                  'Opciones',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                ),
+                const SizedBox(height: 16),
 
-            // Grid de opciones
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                children: [
-                  _MenuCard(
-                    title: 'Iniciar Foco',
-                    icon: Icons.play_circle_outline,
-                    color: Colors.blue,
-                    onTap: () {
-                      // Navegación a pantalla de foco
-                    },
+                Expanded(
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    children: [
+                      _MenuCard(
+                        title: 'Iniciar Foco',
+                        icon: Icons.play_circle_outline,
+                        color: Colors.blue,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => FocusPage(viewModel: viewModel),
+                            ),
+                          );
+                        },
+                      ),
+                      _MenuCard(
+                        title: 'Estadísticas',
+                        icon: Icons.bar_chart_outlined,
+                        color: Colors.green,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => StatsPage(viewModel: viewModel),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  _MenuCard(
-                    title: 'Estadísticas',
-                    icon: Icons.bar_chart_outlined,
-                    color: Colors.green,
-                    onTap: () {
-                      // Navegación a estadísticas
-                    },
+                ),
+                if (viewModel.errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      viewModel.errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ),
-                  _MenuCard(
-                    title: 'Ajustes',
-                    icon: Icons.settings_outlined,
-                    color: Colors.orange,
-                    onTap: () {
-                      // Navegación a ajustes
-                    },
-                  ),
-                  _MenuCard(
-                    title: 'Tienda',
-                    icon: Icons.shopping_bag_outlined,
-                    color: Colors.purple,
-                    onTap: () {
-                      // Navegación a tienda
-                    },
-                  ),
-                ],
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -146,10 +156,10 @@ class _MenuCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             width: 2,
           ),
         ),
