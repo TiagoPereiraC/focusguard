@@ -1,43 +1,110 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/app_palette.dart';
 import '../../viewmodel/focus_viewmodel.dart';
 import 'focus_page.dart';
+import 'settings_page.dart';
 import 'stats_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final FocusViewModel viewModel;
+  final bool isDarkMode;
+  final VoidCallback onToggleTheme;
 
-  const HomePage({super.key, required this.viewModel});
+  const HomePage({
+    super.key,
+    required this.viewModel,
+    required this.isDarkMode,
+    required this.onToggleTheme,
+  });
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late final TextEditingController _minutesController;
+  late final FocusNode _minutesFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _minutesController = TextEditingController(text: widget.viewModel.selectedMinutes.toString());
+    _minutesFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _minutesController.dispose();
+    _minutesFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _applyCustomMinutes(String value) {
+    final int? minutes = int.tryParse(value.trim());
+    if (minutes != null && minutes > 0 && minutes <= 999) {
+      widget.viewModel.selectMinutes(minutes);
+      _minutesController.text = minutes.toString();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: viewModel,
+      animation: widget.viewModel,
       builder: (BuildContext context, Widget? child) {
+        final ColorScheme colorScheme = Theme.of(context).colorScheme;
+        final bool isDark = Theme.of(context).brightness == Brightness.dark;
+        final Color statsStart = colorScheme.tertiaryContainer;
+        final Color statsEnd = colorScheme.secondaryContainer;
+        final Color timerStart = isDark ? CPalette.c2 : CPalette.c4;
+        final Color timerEnd = isDark ? CPalette.c3 : CPalette.c5;
+
+        if (!_minutesFocusNode.hasFocus) {
+          final String selectedValue = widget.viewModel.selectedMinutes.toString();
+          if (_minutesController.text != selectedValue) {
+            _minutesController.text = selectedValue;
+          }
+        }
+
         return Scaffold(
           appBar: AppBar(
-            title: const Text(
+            title: Text(
               'FocusGuard',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: colorScheme.onSurface,
               ),
             ),
             elevation: 0,
-            backgroundColor: Colors.white,
+            actions: [
+              IconButton(
+                onPressed: widget.onToggleTheme,
+                tooltip: widget.isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro',
+                icon: Icon(
+                  widget.isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                ),
+              ),
+            ],
           ),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
+          body: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              _applyCustomMinutes(_minutesController.text);
+              FocusScope.of(context).unfocus();
+            },
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                 Text(
-                  'Hola, bienvenido',
+                  'Bienvenido',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -45,25 +112,25 @@ class HomePage extends StatelessWidget {
                   'Mejora tu concentración detectando cuando abandonas tu sesión',
                   style: Theme.of(
                     context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 40),
 
                 // Tiempo restante cuando hay sesión activa
-                if (viewModel.isRunning)
+                if (widget.viewModel.isRunning)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.blue.shade400, Colors.blue.shade600],
+                        colors: [timerStart, timerEnd],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.blue.withValues(alpha: 0.3),
+                          color: CPalette.c2.withValues(alpha: 0.32),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -77,7 +144,7 @@ class HomePage extends StatelessWidget {
                         children: [
                           // Tiempo grande a la derecha
                           Text(
-                            _formatTime(viewModel.remainingSeconds),
+                            _formatTime(widget.viewModel.remainingSeconds),
                             style: const TextStyle(
                               fontSize: 56,
                               fontWeight: FontWeight.bold,
@@ -96,15 +163,15 @@ class HomePage extends StatelessWidget {
                                   'Tiempo restante',
                                   style: Theme.of(context).textTheme.labelMedium
                                       ?.copyWith(
-                                        color: Colors.white70,
+                                        color: const Color.fromARGB(255, 255, 255, 255),
                                         fontSize: 12,
                                       ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Sesión: ${viewModel.selectedMinutes} min',
+                                  'Sesión: ${widget.viewModel.selectedMinutes} min',
                                   style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(color: Colors.white70),
+                                      ?.copyWith(color: const Color.fromARGB(255, 255, 255, 255)),
                                 ),
                               ],
                             ),
@@ -113,29 +180,39 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (viewModel.isRunning) const SizedBox(height: 24),
+                if (widget.viewModel.isRunning) const SizedBox(height: 24),
 
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    gradient: LinearGradient(
+                      colors: [
+                        statsStart,
+                        statsEnd,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.shade200),
+                    border: Border.all(color: colorScheme.outlineVariant),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _StatItem(
                         label: 'Sesiones',
-                        value: viewModel.stats.totalSessions.toString(),
+                        value: widget.viewModel.stats.totalSessions.toString(),
+                        accentColor: isDark ? CPalette.c9 : CPalette.c1,
                       ),
                       _StatItem(
                         label: 'Combo actual',
-                        value: viewModel.stats.currentCombo.toString(),
+                        value: widget.viewModel.stats.currentCombo.toString(),
+                        accentColor: isDark ? CPalette.c8 : CPalette.c2,
                       ),
                       _StatItem(
                         label: 'Tiempo total',
-                        value: viewModel.formatTotalFocusTime(),
+                        value: widget.viewModel.formatTotalFocusTime(),
+                        accentColor: isDark ? CPalette.c7 : CPalette.c3,
                       ),
                     ],
                   ),
@@ -144,68 +221,82 @@ class HomePage extends StatelessWidget {
 
                 // Selector de duración
                 Text(
-                  'Duración de sesión',
+                  'Duración de sesión (minutos)',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 12),
 
-                // Botones predeterminados
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [25, 30, 45, 60].map((minutes) {
-                    return FilterChip(
-                      label: Text('$minutes min'),
-                      selected: viewModel.selectedMinutes == minutes,
-                      onSelected: (selected) {
-                        if (selected && (viewModel.canStart)) {
-                          viewModel.selectMinutes(minutes);
-                        }
-                      },
-                      selectedColor: Colors.blue,
-                      labelStyle: TextStyle(
-                        color: viewModel.selectedMinutes == minutes
-                            ? Colors.white
-                            : Colors.black87,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 12),
-
                 // Input de tiempo personalizado
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        enabled: viewModel.canStart,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          hintText: '',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          suffixText: 'min',
-                        ),
-                        onSubmitted: (value) {
-                          final int? minutes = int.tryParse(value);
-                          if (minutes != null &&
-                              minutes > 0 &&
-                              minutes <= 999) {
-                            viewModel.selectMinutes(minutes);
-                          }
-                        },
-                      ),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? colorScheme.surfaceContainerHighest
+                        : colorScheme.primaryContainer.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark
+                          ? colorScheme.outline
+                          : colorScheme.primary.withValues(alpha: 0.25),
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _minutesController,
+                          focusNode: _minutesFocusNode,
+                          enabled: widget.viewModel.canStart,
+                          style: TextStyle(
+                            color: isDark ? colorScheme.onSurface : Colors.black,
+                          ),
+                          keyboardType: TextInputType.number,
+                          onTapOutside: (_) {
+                            _applyCustomMinutes(_minutesController.text);
+                            FocusScope.of(context).unfocus();
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Minutos de enfoque',
+                            helperText: 'Escribe cuánto tiempo quieres concentrarte',
+                            hintText: 'Ejemplo: 25',
+                            labelStyle: TextStyle(
+                              color: isDark ? colorScheme.onSurfaceVariant : Colors.black,
+                            ),
+                            helperStyle: TextStyle(
+                              color: isDark ? colorScheme.onSurfaceVariant : Colors.black87,
+                            ),
+                            hintStyle: TextStyle(
+                              color: isDark
+                                  ? colorScheme.onSurfaceVariant.withValues(alpha: 0.75)
+                                  : Colors.black54,
+                            ),
+                            filled: true,
+                            fillColor: isDark
+                              ? colorScheme.surfaceContainerLow
+                              : colorScheme.surface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            suffixText: 'min',
+                            suffixStyle: TextStyle(
+                              color: isDark ? colorScheme.onSurfaceVariant : Colors.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          onSubmitted: (value) {
+                            _applyCustomMinutes(value);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 32),
 
@@ -213,7 +304,7 @@ class HomePage extends StatelessWidget {
                   'Opciones',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -229,11 +320,15 @@ class HomePage extends StatelessWidget {
                       _MenuCard(
                         title: 'Iniciar Foco',
                         icon: Icons.play_circle_outline,
-                        color: Colors.blue,
+                        color: isDark ? Colors.lightGreenAccent : Colors.green,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) => FocusPage(viewModel: viewModel),
+                              builder: (_) => FocusPage(
+                                viewModel: widget.viewModel,
+                                isDarkMode: widget.isDarkMode,
+                                onToggleTheme: widget.onToggleTheme,
+                              ),
                             ),
                           );
                         },
@@ -241,11 +336,30 @@ class HomePage extends StatelessWidget {
                       _MenuCard(
                         title: 'Estadísticas',
                         icon: Icons.bar_chart_outlined,
-                        color: Colors.green,
+                        color: isDark ? Colors.cyanAccent : Colors.lightBlue,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) => StatsPage(viewModel: viewModel),
+                              builder: (_) => StatsPage(
+                                viewModel: widget.viewModel,
+                                isDarkMode: widget.isDarkMode,
+                                onToggleTheme: widget.onToggleTheme,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      _MenuCard(
+                        title: 'Ajustes',
+                        icon: Icons.settings_outlined,
+                        color: isDark ? Colors.orangeAccent : Colors.orange,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => SettingsPage(
+                                isDarkMode: widget.isDarkMode,
+                                onToggleTheme: widget.onToggleTheme,
+                              ),
                             ),
                           );
                         },
@@ -253,16 +367,17 @@ class HomePage extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (viewModel.errorMessage != null)
+                if (widget.viewModel.errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      viewModel.errorMessage!,
+                      widget.viewModel.errorMessage!,
                       style: const TextStyle(color: Colors.red),
                     ),
                   ),
               ],
             ),
+          ),
           ),
         ),
         );
@@ -292,6 +407,7 @@ class _MenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -308,10 +424,10 @@ class _MenuCard extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: colorScheme.onSurface,
               ),
             ),
           ],
@@ -324,8 +440,13 @@ class _MenuCard extends StatelessWidget {
 class _StatItem extends StatelessWidget {
   final String label;
   final String value;
+  final Color accentColor;
 
-  const _StatItem({required this.label, required this.value});
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.accentColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -334,14 +455,17 @@ class _StatItem extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.blue,
+            color: accentColor,
           ),
         ),
         const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: accentColor.withValues(alpha: 0.8)),
+        ),
       ],
     );
   }

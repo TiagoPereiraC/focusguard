@@ -9,11 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  shared_preferences: ^2.5.3
+  sqflite: ^2.4.2
+  path: ^1.9.1
   sensors_plus: ^6.1.2
-
-dependency_overrides:
-  shared_preferences_android: 2.3.4
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

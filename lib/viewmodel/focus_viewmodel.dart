@@ -21,8 +21,13 @@ class FocusViewModel extends BaseViewModel {
   bool _phoneTurned = false;
 
   double? _baseMagnitude;
+  double? _baseX;
+  double? _baseY;
+  double? _baseZ;
+  int _rotationOverThresholdSamples = 0;
 
-  FocusViewModel({required StatsRepository repository}) : _repository = repository {
+  FocusViewModel({required StatsRepository repository})
+    : _repository = repository {
     _loadStats();
   }
 
@@ -32,7 +37,10 @@ class FocusViewModel extends BaseViewModel {
   int get remainingSeconds => _remainingSeconds;
   bool get phoneTurned => _phoneTurned;
 
-  bool get canStart => _mode == FocusMode.idle || _mode == FocusMode.completed || _mode == FocusMode.interrupted;
+  bool get canStart =>
+      _mode == FocusMode.idle ||
+      _mode == FocusMode.completed ||
+      _mode == FocusMode.interrupted;
   bool get isRunning => _mode == FocusMode.running;
   bool get isPaused => _mode == FocusMode.paused;
 
@@ -152,24 +160,54 @@ class FocusViewModel extends BaseViewModel {
   void _startRotationDetection() {
     _stopRotationDetection();
     _baseMagnitude = null;
+    _baseX = null;
+    _baseY = null;
+    _baseZ = null;
+    _rotationOverThresholdSamples = 0;
 
-    _accelerometerSubscription = accelerometerEventStream().listen((AccelerometerEvent event) {
+    _accelerometerSubscription = accelerometerEventStream().listen((
+      AccelerometerEvent event,
+    ) {
       if (!isRunning) {
         return;
       }
 
       final double magnitude = sqrt(
-        event.x * event.x +
-            event.y * event.y +
-            event.z * event.z,
+        event.x * event.x + event.y * event.y + event.z * event.z,
       );
 
       _baseMagnitude ??= magnitude;
+      _baseX ??= event.x;
+      _baseY ??= event.y;
+      _baseZ ??= event.z;
+
+      final double baseMagnitude = sqrt(
+        _baseX! * _baseX! + _baseY! * _baseY! + _baseZ! * _baseZ!,
+      );
+
+      // Protect against invalid sensor values.
+      if (magnitude < 0.1 || baseMagnitude < 0.1) {
+        return;
+      }
+
+      final double dot =
+          (_baseX! * event.x) + (_baseY! * event.y) + (_baseZ! * event.z);
+      final double cosine = (dot / (baseMagnitude * magnitude)).clamp(
+        -1.0,
+        1.0,
+      );
+      final double angleDegrees = acos(cosine) * (180 / pi);
 
       final double delta = (_baseMagnitude! - magnitude).abs();
 
-      // Delta alto significa que el telefono cambio mucho su orientacion.
-      if (delta > 3.2) {
+      // Trigger when orientation changes enough, including slow rotations.
+      if (angleDegrees > 35 || delta > 3.2) {
+        _rotationOverThresholdSamples += 1;
+      } else {
+        _rotationOverThresholdSamples = 0;
+      }
+
+      if (_rotationOverThresholdSamples >= 3) {
         _interruptSessionByRotation();
       }
     });
@@ -179,6 +217,10 @@ class FocusViewModel extends BaseViewModel {
     _accelerometerSubscription?.cancel();
     _accelerometerSubscription = null;
     _baseMagnitude = null;
+    _baseX = null;
+    _baseY = null;
+    _baseZ = null;
+    _rotationOverThresholdSamples = 0;
   }
 
   String formatRemainingTime() {
