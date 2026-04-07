@@ -123,6 +123,82 @@ Modo estricto:
 - Usuario no debe salir ni cambiar a otras apps hasta finalizar tiempo o usar salida autorizada.
 - Sistema debe impedir volver a inicio, abrir recientes o cambiar de app dentro de lo permitido por Android (LockTask/kiosk mode).
 
+### RF-12 - Compras integradas de temas
+- Actor: Usuario
+- Objetivo: Ver catálogo, comprar y aplicar temas premium.
+
+### RF-13 - Compras integradas de sonidos
+- Actor: Usuario
+- Objetivo: Comprar paquetes de sonidos y usarlos en alertas de sesión.
+
+### RF-14 - Fondo de pantalla por modo
+- Actor: Usuario
+- Objetivo: Elegir fondo para modo estándar y modo estricto.
+
+### RF-15 - Fondos dinámicos por estado
+- Actor: Sistema
+- Objetivo: Cambiar fondo automáticamente en ejecución, pausa, completado e interrumpido.
+
+### RF-16 - Notificaciones de inicio y fin
+- Actor: Sistema
+- Objetivo: Enviar alertas locales al iniciar y finalizar sesión.
+
+### RF-17 - Notificaciones intermedias configurables
+- Actor: Usuario
+- Objetivo: Activar recordatorios periódicos durante la sesión.
+
+### RF-19 - Personalización de sonido de notificación
+- Actor: Usuario
+- Objetivo: Seleccionar sonido, volumen relativo y vibración.
+
+### RF-20 - Modo silencioso inteligente
+- Actor: Sistema
+- Objetivo: Adaptar alertas a silencio/vibración sin romper la experiencia.
+
+### RF-21 - Previsualización de alertas
+- Actor: Usuario
+- Objetivo: Probar notificación y sonido antes de guardar ajustes.
+
+### RF-22 - Biblioteca de sesiones
+- Actor: Usuario
+- Objetivo: Consultar historial con fecha, duración, estado y motivo de interrupción.
+
+### RF-23 - Metas diarias y semanales
+- Actor: Usuario
+- Objetivo: Definir objetivos de foco y visualizar cumplimiento.
+
+### RF-24 - Logros y gamificación
+- Actor: Sistema
+- Objetivo: Desbloquear insignias por constancia, rachas y metas alcanzadas.
+
+### RF-25 - Programación de sesiones
+- Actor: Usuario
+- Objetivo: Agendar sesiones futuras con recordatorio automático.
+
+### RF-26 - Perfiles de enfoque
+- Actor: Usuario
+- Objetivo: Crear perfiles (estudio, trabajo, lectura) con ajustes predefinidos.
+
+### RF-27 - Sensibilidad avanzada del sensor
+- Actor: Usuario
+- Objetivo: Configurar nivel o calibrar umbral de detección según dispositivo.
+
+### RF-28 - Exportación avanzada de datos
+- Actor: Usuario
+- Objetivo: Exportar estadísticas e historial en JSON y CSV.
+
+### RF-29 - Backup y restauración local
+- Actor: Usuario
+- Objetivo: Guardar copia local de datos y restaurarla manualmente.
+
+### RF-30 - Onboarding con permisos guiados
+- Actor: Sistema
+- Objetivo: Explicar permisos, recabar consentimiento y solicitar acceso de forma gradual.
+
+### RF-31 - Soporte multilenguaje
+- Actor: Usuario
+- Objetivo: Cambiar idioma de la interfaz desde ajustes.
+
 ---
 
 ## Capítulo 3 - Requisitos No Funcionales
