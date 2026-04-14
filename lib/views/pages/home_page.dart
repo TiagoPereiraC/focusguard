@@ -10,12 +10,16 @@ class HomePage extends StatefulWidget {
   final FocusViewModel viewModel;
   final bool isDarkMode;
   final VoidCallback onToggleTheme;
+  final bool tosAccepted;
+  final ValueChanged<bool> onSetTosAccepted;
 
   const HomePage({
     super.key,
     required this.viewModel,
     required this.isDarkMode,
     required this.onToggleTheme,
+    required this.tosAccepted,
+    required this.onSetTosAccepted,
   });
 
   @override
@@ -31,6 +35,9 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _minutesController = TextEditingController(text: widget.viewModel.selectedMinutes.toString());
     _minutesFocusNode = FocusNode();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.viewModel.initialize();
+    });
   }
 
   @override
@@ -359,6 +366,8 @@ class _HomePageState extends State<HomePage> {
                               builder: (_) => SettingsPage(
                                 isDarkMode: widget.isDarkMode,
                                 onToggleTheme: widget.onToggleTheme,
+                                tosAccepted: widget.tosAccepted,
+                                onSetTosAccepted: widget.onSetTosAccepted,
                               ),
                             ),
                           );

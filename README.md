@@ -36,204 +36,221 @@ Responsabilidades del usuario:
 ---
 ## Capítulo 2 - Requisitos Funcionales
 
-### RF-01 - Registrar sesión de foco
-Caso de uso: Iniciar Sesión de Foco
+Especificación consolidada para un desarrollo individual en 2 meses.
+
+Total de requisitos funcionales definidos: 18
+Estado:
+- ✅ Implementado
+- 🟡 Parcial
+- ⬜ No implementado
+
+### MVP (obligatorios para entrega)
+
+### RF-01 - Inicio de sesión de foco
+- Código: RF-01
+- Prioridad: Alta
+- Estado: ✅ Implementado
 - Actor: Usuario
-- Prioridad: Esencial
-- Entradas: Duración de sesión
-- Salida: Sesión iniciada y timer activo
+- Descripción: El usuario inicia una sesión seleccionando una duración válida.
+- Entradas: duración de sesión, acción Iniciar.
+- Resultado esperado: temporizador activo y sesión en estado En curso.
 
-Flujo principal:
-1. Usuario selecciona Iniciar foco.
-2. Configura duración (o usa predeterminada).
-3. Sistema activa timer y giroscopio.
-4. Interfaz muestra tiempo restante y combo.
-
-Flujo de excepción:
-1. Duración inválida.
-2. Sistema muestra alerta.
-
-### RF-02 - Finalizar sesión
-- Actor: Usuario o Sistema
-
-Flujo principal:
-1. Usuario presiona Finalizar o el timer llega a cero.
-2. Sistema detiene giroscopio.
-3. Sistema registra sesión completada.
-4. Sistema emite notificación local.
-
-### RF-03 - Detectar movimiento
+### RF-02 - Monitoreo del giroscopio en sesión activa
+- Código: RF-02
+- Prioridad: Alta
+- Estado: ✅ Implementado
 - Actor: Sistema
-- Prioridad: Esencial
+- Descripción: El sistema procesa eventos del giroscopio solo cuando existe una sesión activa.
+- Entradas: eventos del sensor, estado de sesión.
+- Resultado esperado: flujo de eventos listo para evaluar distracciones.
 
-Flujo principal:
-1. Durante sesión activa, sistema recibe eventos del giroscopio.
-2. Evalúa movimiento según umbral configurado.
-3. Si supera umbral, dispara ruptura de combo.
-
-### RF-04 - Ruptura de combo
+### RF-03 - Detección de distracción por umbral
+- Código: RF-03
+- Prioridad: Alta
+- Estado: ✅ Implementado
 - Actor: Sistema
+- Descripción: El sistema detecta manipulación cuando la señal del sensor supera el umbral configurado.
+- Entradas: eventos del giroscopio, umbral de sensibilidad.
+- Resultado esperado: evento de distracción registrado en la sesión.
 
-Flujo principal:
-1. Giroscopio detecta rotación o manipulación inválida.
-2. Sistema rompe combo actual (currentCombo = 0).
-3. Sistema registra motivo Movimiento detectado.
-4. Actualiza interfaz.
+### RF-04 - Finalización manual y automática
+- Código: RF-04
+- Prioridad: Alta
+- Estado: ✅ Implementado
+- Actor: Usuario / Sistema
+- Descripción: La sesión puede finalizar por acción del usuario o por llegada del temporizador a cero.
+- Entradas: acción Finalizar, vencimiento de tiempo.
+- Resultado esperado: sesión cerrada con resultado y motivo.
 
-### RF-05 - Gestión de combos
+### RF-05 - Gestión de racha y mejor racha
+- Código: RF-05
+- Prioridad: Alta
+- Estado: ✅ Implementado
 - Actor: Sistema
+- Descripción: El sistema calcula y mantiene racha actual y mejor racha histórica.
+- Entradas: resultado de sesión (completada/interrumpida).
+- Resultado esperado: métricas de racha actualizadas de forma consistente.
 
-Flujo principal:
-1. Sesión completada sin ruptura: combo++.
-2. Sesión interrumpida: combo = 0.
-3. Guardar mejor combo histórico.
-
-### RF-06 - Estadísticas básicas
-- Actor: Usuario
-- Salida: Tiempo total, sesiones completadas, mejor combo.
-
-### RF-07 - Configuración
-- Entradas: Duración foco, sensibilidad del sensor, notificaciones.
-
-### RF-08 - Notificaciones locales
+### RF-06 - Registro de historial de sesiones
+- Código: RF-06
+- Prioridad: Alta
+- Estado: ✅ Implementado
 - Actor: Sistema
-- Salida: Alertas de fin de sesión o pausa.
-- Tecnología prevista: flutter_local_notifications.
+- Descripción: Cada sesión finalizada se almacena con fecha, duración y estado.
+- Entradas: datos de sesión al finalizar.
+- Resultado esperado: historial local consultable por el usuario.
 
-### RF-09 - Foreground service
+### RF-07 - Estadísticas acumuladas
+- Código: RF-07
+- Prioridad: Alta
+- Estado: ✅ Implementado
+- Actor: Sistema / Usuario
+- Descripción: La app muestra tiempo total, sesiones completadas, racha actual y mejor racha.
+- Entradas: historial de sesiones.
+- Resultado esperado: panel de estadísticas actualizado.
+
+### RF-08 - Configuración de duración por defecto
+- Código: RF-08
+- Prioridad: Media
+- Estado: ✅ Implementado
+- Actor: Usuario
+- Descripción: El usuario define una duración predeterminada para nuevas sesiones.
+- Entradas: valor de duración en Ajustes.
+- Resultado esperado: nuevas sesiones utilizan la duración configurada.
+
+### RF-09 - Configuración de sensibilidad del sensor
+- Código: RF-09
+- Prioridad: Media
+- Estado: ⬜ No implementado
+- Actor: Usuario
+- Descripción: El usuario ajusta la sensibilidad de detección del movimiento.
+- Entradas: nivel/valor de sensibilidad.
+- Resultado esperado: umbral aplicado en la detección de distracciones.
+
+### RF-10 - Notificaciones locales de ciclo de sesión
+- Código: RF-10
+- Prioridad: Media
+- Estado: ⬜ No implementado
 - Actor: Sistema
-- Objetivo: Mantener sesión activa en Android.
-- Tecnología prevista: flutter_foreground_task.
+- Descripción: El sistema envía notificaciones al iniciar, durante y al finalizar sesión según configuración.
+- Entradas: estado de sesión, preferencias de notificación.
+- Resultado esperado: notificaciones emitidas en los momentos definidos.
 
-### RF-10 - Compras integradas
+### RF-11 - Onboarding y consentimiento explícito
+- Código: RF-11
+- Prioridad: Alta
+- Estado: ✅ Implementado
+- Actor: Sistema / Usuario
+- Descripción: La app solicita consentimiento explícito para uso del giroscopio y aceptación de política de privacidad.
+- Entradas: aceptación del usuario en onboarding.
+- Resultado esperado: consentimiento almacenado antes del uso completo de la app.
+
+### RF-12 - Exportación de datos en JSON
+- Código: RF-12
+- Prioridad: Alta
+- Estado: ⬜ No implementado
 - Actor: Usuario
-- Objetivo: Desbloquear temas o sonidos.
-- Tecnologia prevista: in_app_purchase.
+- Descripción: El usuario puede exportar sus datos de sesión y estadísticas en formato JSON.
+- Entradas: acción Exportar datos.
+- Resultado esperado: archivo JSON válido generado localmente.
 
-### RF-11 - Modo estandar y modo estricto
+### RF-13 - Eliminación total de datos
+- Código: RF-13
+- Prioridad: Alta
+- Estado: ⬜ No implementado
 - Actor: Usuario
+- Descripción: El usuario puede borrar toda su información local desde Ajustes.
+- Entradas: acción Eliminar datos, confirmación del usuario.
+- Resultado esperado: base local limpia y estado reiniciado.
 
-Modo estándar:
-- Usuario puede seguir usando el celular.
-- App detecta manipulación mediante giroscopio durante sesión.
-- Si hay manipulación no permitida, rompe combo.
-
-Modo estricto:
-- App restringe al máximo la interacción con el celular.
-- Usuario no debe salir ni cambiar a otras apps hasta finalizar tiempo o usar salida autorizada.
-- Sistema debe impedir volver a inicio, abrir recientes o cambiar de app dentro de lo permitido por Android (LockTask/kiosk mode).
-
-### RF-12 - Compras integradas de temas
-- Actor: Usuario
-- Objetivo: Ver catálogo, comprar y aplicar temas premium.
-
-### RF-13 - Compras integradas de sonidos
-- Actor: Usuario
-- Objetivo: Comprar paquetes de sonidos y usarlos en alertas de sesión.
-
-### RF-14 - Fondo de pantalla por modo
-- Actor: Usuario
-- Objetivo: Elegir fondo para modo estándar y modo estricto.
-
-### RF-15 - Fondos dinámicos por estado
+### RF-14 - Continuidad en segundo plano Android
+- Código: RF-14
+- Prioridad: Media
+- Estado: ⬜ No implementado
 - Actor: Sistema
-- Objetivo: Cambiar fondo automáticamente en ejecución, pausa, completado e interrumpido.
+- Descripción: La sesión de foco continúa correctamente cuando la app pasa a segundo plano.
+- Entradas: transición foreground/background.
+- Resultado esperado: temporizador y estado de sesión consistentes.
 
-### RF-16 - Notificaciones de inicio y fin
-- Actor: Sistema
-- Objetivo: Enviar alertas locales al iniciar y finalizar sesión.
-
-### RF-17 - Notificaciones intermedias configurables
+### RF-15 - Modo estándar de enfoque
+- Código: RF-15
+- Prioridad: Media
+- Estado: ✅ Implementado
 - Actor: Usuario
-- Objetivo: Activar recordatorios periódicos durante la sesión.
+- Descripción: En modo estándar el usuario puede usar el dispositivo mientras la app detecta distracciones.
+- Entradas: selección de modo estándar.
+- Resultado esperado: sesión activa con control por giroscopio sin restricciones adicionales.
 
-### RF-19 - Personalización de sonido de notificación
+### RF-16 - Modo estricto de enfoque
+- Código: RF-16
+- Prioridad: Media
+- Estado: ⬜ No implementado
+- Actor: Usuario / Sistema
+- Descripción: En modo estricto se aplican restricciones adicionales compatibles con Android.
+- Entradas: selección de modo estricto.
+- Resultado esperado: sesión con menor posibilidad de abandono o multitarea.
+
+### Post-MVP (si hay tiempo)
+
+### RF-17 - Personalización visual y acústica
+- Código: RF-17
+- Prioridad: Baja
+- Estado: ⬜ No implementado
 - Actor: Usuario
-- Objetivo: Seleccionar sonido, volumen relativo y vibración.
+- Descripción: El usuario personaliza fondos y componentes sonoros de la experiencia.
+- Entradas: selección de recursos visuales y de alerta.
+- Resultado esperado: interfaz y alertas adaptadas a preferencias del usuario.
 
-### RF-20 - Modo silencioso inteligente
-- Actor: Sistema
-- Objetivo: Adaptar alertas a silencio/vibración sin romper la experiencia.
-
-### RF-21 - Previsualización de alertas
-- Actor: Usuario
-- Objetivo: Probar notificación y sonido antes de guardar ajustes.
-
-### RF-22 - Biblioteca de sesiones
-- Actor: Usuario
-- Objetivo: Consultar historial con fecha, duración, estado y motivo de interrupción.
-
-### RF-23 - Metas diarias y semanales
-- Actor: Usuario
-- Objetivo: Definir objetivos de foco y visualizar cumplimiento.
-
-### RF-24 - Logros y gamificación
-- Actor: Sistema
-- Objetivo: Desbloquear insignias por constancia, rachas y metas alcanzadas.
-
-### RF-25 - Programación de sesiones
-- Actor: Usuario
-- Objetivo: Agendar sesiones futuras con recordatorio automático.
-
-### RF-26 - Perfiles de enfoque
-- Actor: Usuario
-- Objetivo: Crear perfiles (estudio, trabajo, lectura) con ajustes predefinidos.
-
-### RF-27 - Sensibilidad avanzada del sensor
-- Actor: Usuario
-- Objetivo: Configurar nivel o calibrar umbral de detección según dispositivo.
-
-### RF-28 - Exportación avanzada de datos
-- Actor: Usuario
-- Objetivo: Exportar estadísticas e historial en JSON y CSV.
-
-### RF-29 - Backup y restauración local
-- Actor: Usuario
-- Objetivo: Guardar copia local de datos y restaurarla manualmente.
-
-### RF-30 - Onboarding con permisos guiados
-- Actor: Sistema
-- Objetivo: Explicar permisos, recabar consentimiento y solicitar acceso de forma gradual.
-
-### RF-31 - Soporte multilenguaje
-- Actor: Usuario
-- Objetivo: Cambiar idioma de la interfaz desde ajustes.
+### RF-18 - Funcionalidades avanzadas
+- Código: RF-18
+- Prioridad: Baja
+- Estado: ⬜ No implementado
+- Actor: Usuario / Sistema
+- Descripción: La app incorpora metas, logros, programación de sesiones, perfiles, internacionalización y compras integradas.
+- Entradas: configuración y acciones avanzadas del usuario.
+- Resultado esperado: ampliación de alcance sin afectar el núcleo del MVP.
 
 ---
 
 ## Capítulo 3 - Requisitos No Funcionales
 
+Estado:
+- ✅ Implementado
+- 🟡 Parcial
+- ⬜ No implementado
+
 ### RNF generales
-- RNF-01 Plataforma: Android.
-- RNF-02 Rendimiento: timer fluido y sensor responsive.
-- RNF-03 Mantenibilidad: arquitectura MVVM obligatoria.
-- RNF-04 Usabilidad: interfaz simple y clara.
-- RNF-05 Persistencia: local offline (SQLite/Hive).
-- RNF-06 Sensores: validar disponibilidad del giroscopio.
-- RNF-07 Android: permisos y configuración correctos.
+
+- RNF-01 ✅ Plataforma: Android.
+- RNF-02 ✅ Rendimiento: timer fluido y sensor responsive.
+- RNF-03 ✅ Mantenibilidad: arquitectura MVVM obligatoria.
+- RNF-04 ✅ Usabilidad: interfaz simple y clara.
+- RNF-05 ✅ Persistencia: local offline (SQLite/Hive).
+- RNF-06 🟡 Sensores: validar disponibilidad del giroscopio.
+- RNF-07 ⬜ Android: permisos y configuración correctos.
 
 ### RNF normativos - Uruguay y Brasil
 
 #### Uruguay - Ley N. 18.331
-- RNF-URU-01 Consentimiento explícito: obtener consentimiento expreso antes de acceder al giroscopio.
-- RNF-URU-02 Finalidad específica: uso exclusivo para detectar rupturas de foco.
-- RNF-URU-03 Derecho ARCO: acceso, rectificación, cancelación y oposición de datos.
-- RNF-URU-04 Seguridad: cifrado y medidas razonables para datos locales.
-- RNF-URU-05 Información clara: explicar uso del giroscopio en onboarding.
+- RNF-URU-01 ✅ Consentimiento explícito: obtener consentimiento expreso antes de acceder al giroscopio.
+- RNF-URU-02 ✅ Finalidad específica: uso exclusivo para detectar rupturas de foco.
+- RNF-URU-03 🟡 Derecho ARCO: acceso, rectificación, cancelación y oposición de datos.
+- RNF-URU-04 ⬜ Seguridad: cifrado y medidas razonables para datos locales.
+- RNF-URU-05 ✅ Información clara: explicar uso del giroscopio en onboarding.
 
 #### Brasil - LGPD (Ley 13.709/2018)
-- RNF-BRA-01 Consentimiento LGPD: específico, informado, inequívoco y granular.
-- RNF-BRA-02 Compliance ANPD: identificar responsable del tratamiento.
-- RNF-BRA-03 Datos sensibles: base legal explícita para hábitos personales.
-- RNF-BRA-04 Prohibición de espionaje: detener giroscopio cuando no corresponda.
-- RNF-BRA-05 Portabilidad y olvido: exportar datos y borrar datos.
+- RNF-BRA-01 ✅ Consentimiento LGPD: específico, informado, inequívoco y granular.
+- RNF-BRA-02 🟡 Compliance ANPD: identificar responsable del tratamiento.
+- RNF-BRA-03 ✅ Datos sensibles: base legal explícita para hábitos personales.
+- RNF-BRA-04 ⬜ Prohibición de espionaje: detener giroscopio cuando no corresponda.
+- RNF-BRA-05 🟡 Portabilidad y olvido: exportar datos y borrar datos.
 
 #### RNF comunes Uruguay/Brasil
-- RNF-INT-01 Política de privacidad visible.
-- RNF-INT-02 Permisos Android solo cuando sean necesarios.
-- RNF-INT-03 No compartir datos con terceros.
-- RNF-INT-04 Menores: requerir autorización parental cuando aplique.
-- RNF-INT-05 Informar cambios de política de privacidad.
+- RNF-INT-01 ✅ Política de privacidad visible.
+- RNF-INT-02 🟡 Permisos Android solo cuando sean necesarios.
+- RNF-INT-03 ✅ No compartir datos con terceros.
+- RNF-INT-04 ⬜ Menores: requerir autorización parental cuando aplique.
+- RNF-INT-05 ⬜ Informar cambios de política de privacidad.
 
 ### Implementación práctica obligatoria
 
@@ -273,5 +290,5 @@ Pendiente o parcial respecto al documento:
 
 ## Nota
 Requisito obligatorio de la ementa:
-- La integración de sensores con la interfaz se evidencia en RF-03 (detectar movimiento) y RF-04 (ruptura de combo).
+- La integración de sensores con la interfaz se evidencia en RF-02 (monitoreo del giroscopio y ruptura de foco).
 - En estas funcionalidades, los eventos del giroscopio cambian en tiempo real el estado de la sesión, el combo y la UI.

@@ -10,6 +10,7 @@ import 'base_viewmodel.dart';
 
 class FocusViewModel extends BaseViewModel {
   final StatsRepository _repository;
+  bool _initialized = false;
 
   Timer? _timer;
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
@@ -27,9 +28,7 @@ class FocusViewModel extends BaseViewModel {
   int _rotationOverThresholdSamples = 0;
 
   FocusViewModel({required StatsRepository repository})
-    : _repository = repository {
-    _loadStats();
-  }
+    : _repository = repository;
 
   FocusStats get stats => _stats;
   FocusMode get mode => _mode;
@@ -43,6 +42,14 @@ class FocusViewModel extends BaseViewModel {
       _mode == FocusMode.interrupted;
   bool get isRunning => _mode == FocusMode.running;
   bool get isPaused => _mode == FocusMode.paused;
+
+  Future<void> initialize() async {
+    if (_initialized) {
+      return;
+    }
+    _initialized = true;
+    await _loadStats();
+  }
 
   Future<void> _loadStats() async {
     setBusy(true);

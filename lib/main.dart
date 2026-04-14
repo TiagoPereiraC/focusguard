@@ -1,41 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 
 import 'model/stats_repository.dart';
+import 'services/notification_service.dart';
 import 'theme/app_palette.dart';
 import 'viewmodel/focus_viewmodel.dart';
 import 'views/pages/home_page.dart';
+import 'views/pages/tos_dialog.dart';
 
 const String _themeModePrefKey = 'theme_mode';
+const String _tosAcceptedPrefKey = 'tos_accepted';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  
+  await NotificationService().initialize();
+  
+  final Brightness systemBrightness =
+      PlatformDispatcher.instance.platformBrightness;
+  final ThemeMode initialThemeMode = systemBrightness == Brightness.dark
+      ? ThemeMode.dark
+      : ThemeMode.light;
 
-  final String? storedTheme = prefs.getString(_themeModePrefKey);
-  late final ThemeMode initialThemeMode;
-
-  if (storedTheme == null) {
-    final Brightness systemBrightness =
-        PlatformDispatcher.instance.platformBrightness;
-    initialThemeMode = systemBrightness == Brightness.dark
-        ? ThemeMode.dark
-        : ThemeMode.light;
-    await prefs.setString(_themeModePrefKey, initialThemeMode.name);
-  } else {
-    initialThemeMode = storedTheme == ThemeMode.dark.name
-        ? ThemeMode.dark
-        : ThemeMode.light;
-  }
-
-  runApp(FocusGuardApp(initialThemeMode: initialThemeMode));
+  runApp(FocusGuardApp(
+    initialThemeMode: initialThemeMode,
+  ));
 }
 
 class FocusGuardApp extends StatefulWidget {
   final ThemeMode initialThemeMode;
 
-  const FocusGuardApp({super.key, required this.initialThemeMode});
+  const FocusGuardApp({
+    super.key,
+    required this.initialThemeMode,
+  });
 
   @override
   State<FocusGuardApp> createState() => _FocusGuardAppState();
@@ -44,12 +44,68 @@ class FocusGuardApp extends StatefulWidget {
 class _FocusGuardAppState extends State<FocusGuardApp> {
   late final FocusViewModel _focusViewModel;
   late ThemeMode _themeMode;
+  bool _prefsLoaded = false;
+  late bool _tosAccepted;
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
     super.initState();
     _focusViewModel = FocusViewModel(repository: StatsRepository());
     _themeMode = widget.initialThemeMode;
+    _tosAccepted = true;
+    _loadInitialPreferences();
+  }
+
+  Future<void> _loadInitialPreferences() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? storedTheme = prefs.getString(_themeModePrefKey);
+    final bool tosAccepted = prefs.getBool(_tosAcceptedPrefKey) ?? false;
+
+    ThemeMode resolvedThemeMode = _themeMode;
+    if (storedTheme == ThemeMode.dark.name) {
+      resolvedThemeMode = ThemeMode.dark;
+    } else if (storedTheme == ThemeMode.light.name) {
+      resolvedThemeMode = ThemeMode.light;
+    } else {
+      await prefs.setString(_themeModePrefKey, _themeMode.name);
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _themeMode = resolvedThemeMode;
+      _tosAccepted = tosAccepted;
+      _prefsLoaded = true;
+    });
+
+    if (!_tosAccepted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _checkToS());
+    }
+  }
+
+  Future<void> _checkToS() async {
+    if (!_prefsLoaded) return;
+    final BuildContext? ctx = _navigatorKey.currentContext;
+    if (ctx == null || !mounted) return;
+
+    final bool accepted =
+        await showToSDialog(ctx, canDismiss: false, requireAcceptance: true) ?? false;
+
+    if (accepted) {
+      await _setTosAccepted(true);
+    } else {
+      SystemNavigator.pop();
+    }
+  }
+
+  Future<void> _setTosAccepted(bool value) async {
+    if (_tosAccepted == value) return;
+    setState(() => _tosAccepted = value);
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_tosAcceptedPrefKey, value);
   }
 
   @override
@@ -74,6 +130,7 @@ class _FocusGuardAppState extends State<FocusGuardApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'FocusGuard',
       debugShowCheckedModeBanner: false,
       themeMode: _themeMode,
@@ -159,6 +216,8 @@ class _FocusGuardAppState extends State<FocusGuardApp> {
         viewModel: _focusViewModel,
         isDarkMode: _themeMode == ThemeMode.dark,
         onToggleTheme: _toggleTheme,
+        tosAccepted: _tosAccepted,
+        onSetTosAccepted: _setTosAccepted,
       ),
     );
   }

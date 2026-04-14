@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches Flutter dark theme surface color (0xFF071119) -->
+    <color name="splash_background">#071119</color>
+</resources>
