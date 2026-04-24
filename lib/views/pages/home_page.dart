@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../model/focus_sensitivity_mode.dart';
+import '../../model/notification_preferences.dart';
 import '../../theme/app_palette.dart';
 import '../../viewmodel/focus_viewmodel.dart';
 import 'focus_page.dart';
@@ -12,6 +14,11 @@ class HomePage extends StatefulWidget {
   final VoidCallback onToggleTheme;
   final bool tosAccepted;
   final ValueChanged<bool> onSetTosAccepted;
+  final NotificationPreferences notificationPreferences;
+  final Future<void> Function(NotificationPreferenceType, bool)
+  onUpdateNotificationPreference;
+  final FocusSensitivityMode sensitivityMode;
+  final Future<void> Function(FocusSensitivityMode) onUpdateSensitivityMode;
 
   const HomePage({
     super.key,
@@ -20,6 +27,10 @@ class HomePage extends StatefulWidget {
     required this.onToggleTheme,
     required this.tosAccepted,
     required this.onSetTosAccepted,
+    required this.notificationPreferences,
+    required this.onUpdateNotificationPreference,
+    required this.sensitivityMode,
+    required this.onUpdateSensitivityMode,
   });
 
   @override
@@ -368,6 +379,13 @@ class _HomePageState extends State<HomePage> {
                                 onToggleTheme: widget.onToggleTheme,
                                 tosAccepted: widget.tosAccepted,
                                 onSetTosAccepted: widget.onSetTosAccepted,
+                                notificationPreferences:
+                                    widget.notificationPreferences,
+                                onUpdateNotificationPreference:
+                                    widget.onUpdateNotificationPreference,
+                                sensitivityMode: widget.sensitivityMode,
+                                onUpdateSensitivityMode:
+                                  widget.onUpdateSensitivityMode,
                               ),
                             ),
                           );

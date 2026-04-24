@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:vibration/vibration.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -14,7 +16,7 @@ class NotificationService {
 
   Future<void> initialize() async {
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_notification');
 
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
@@ -45,20 +47,26 @@ class NotificationService {
     required String title,
     required String body,
     String? payload,
+    Int64List? vibrationPattern,
+    String channelId = 'focusguard_channel',
+    String channelName = 'Focus Sessions',
+    String channelDescription = 'Notifications for focus session events',
   }) async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'focusguard_channel',
-      'Focus Sessions',
-      channelDescription: 'Notifications for focus session events',
+    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      channelId,
+      channelName,
+      channelDescription: channelDescription,
       importance: Importance.max,
       priority: Priority.high,
       enableVibration: true,
+      vibrationPattern: vibrationPattern,
+      icon: '@drawable/ic_notification',
+      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
 
-    const NotificationDetails details = NotificationDetails(
+    final NotificationDetails details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -80,8 +88,27 @@ class NotificationService {
     await _notificationsPlugin.cancelAll();
   }
 
+  Future<void> vibrateInterruptionAlert() async {
+    final bool hasVibrator = await Vibration.hasVibrator();
+    if (!hasVibrator) {
+      return;
+    }
+
+    final bool hasAmplitudeControl = await Vibration.hasAmplitudeControl();
+
+    if (hasAmplitudeControl) {
+      await Vibration.vibrate(
+        pattern: <int>[0, 300, 140, 700],
+        intensities: <int>[0, 180, 0, 255],
+      );
+      return;
+    }
+
+    await Vibration.vibrate(pattern: <int>[0, 300, 140, 700]);
+  }
+
   void _onNotificationTapped(NotificationResponse response) {
     // Handle notification tap here
-    print('Notification tapped: ${response.payload}');
+    debugPrint('Notification tapped: ${response.payload}');
   }
 }

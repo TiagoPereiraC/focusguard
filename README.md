@@ -3,21 +3,21 @@
 ## Capítulo 1 - Descripción General del Sistema
 
 ### Descripción del sistema
-FocusGuard es una aplicación móvil para Android orientada a mejorar la concentración durante sesiones de estudio o trabajo. Su propuesta principal es detectar, mediante el giroscopio del dispositivo, movimientos que indiquen manipulación del teléfono durante una sesión de foco y usar ese evento para romper el combo o racha de concentración.
+FocusGuard es una aplicación móvil para Android orientada a mejorar la concentración durante sesiones de estudio o trabajo. Su propuesta principal es detectar, mediante fusión de sensores (acelerómetro, giroscopio y acelerómetro lineal), movimientos que indiquen manipulación del teléfono durante una sesión de foco y usar ese evento para romper el combo o racha de concentración.
 
 ### Objetivos del sistema
 El sistema debe permitir:
 - Registrar sesiones de foco.
-- Detectar giros mediante giroscopio.
+- Detectar manipulación con fusión de sensores.
 - Mantener sesiones activas con foreground service.
 - Gestionar combos y rachas.
 - Mostrar estadísticas locales.
-- Emitir notificaciones al finalizar sesiones.
+- Emitir notificaciones durante el ciclo de sesión.
 
 ### Alcance del sistema
 FocusGuard permitirá:
 - Iniciar y finalizar sesiones de foco.
-- Detectar giros mediante giroscopio.
+- Detectar manipulación con fusión de sensores.
 - Mantener sesiones mediante servicio en primer plano.
 - Registrar sesiones localmente.
 - Configurar sensibilidad del sensor.
@@ -121,18 +121,18 @@ Estado:
 ### RF-09 - Configuración de sensibilidad del sensor
 - Código: RF-09
 - Prioridad: Media
-- Estado: ⬜ No implementado
+- Estado: ✅ Implementado
 - Actor: Usuario
-- Descripción: El usuario ajusta la sensibilidad de detección del movimiento.
+- Descripción: El usuario ajusta la sensibilidad de detección del movimiento entre 4 niveles (Low, Balanced, High, Extreme).
 - Entradas: nivel/valor de sensibilidad.
-- Resultado esperado: umbral aplicado en la detección de distracciones.
+- Resultado esperado: umbrales y ventanas de evidencia aplicados en tiempo real para la detección de distracciones.
 
 ### RF-10 - Notificaciones locales de ciclo de sesión
 - Código: RF-10
 - Prioridad: Media
-- Estado: ⬜ No implementado
+- Estado: ✅ Implementado
 - Actor: Sistema
-- Descripción: El sistema envía notificaciones al iniciar, durante y al finalizar sesión según configuración.
+- Descripción: El sistema envía notificaciones al iniciar, reanudar, pausar, reiniciar, completar e interrumpir sesión según configuración.
 - Entradas: estado de sesión, preferencias de notificación.
 - Resultado esperado: notificaciones emitidas en los momentos definidos.
 
@@ -226,7 +226,7 @@ Estado:
 - RNF-03 ✅ Mantenibilidad: arquitectura MVVM obligatoria.
 - RNF-04 ✅ Usabilidad: interfaz simple y clara.
 - RNF-05 ✅ Persistencia: local offline (SQLite/Hive).
-- RNF-06 🟡 Sensores: validar disponibilidad del giroscopio.
+- RNF-06 ✅ Sensores: validar disponibilidad del giroscopio.
 - RNF-07 ⬜ Android: permisos y configuración correctos.
 
 ### RNF normativos - Uruguay y Brasil
@@ -278,17 +278,18 @@ Implementado en esta base:
 - Flutter con arquitectura por capas MVVM.
 - Persistencia local con SQLite.
 - Registro de sesiones, combo actual y mejor combo.
-- Detección de movimiento durante sesión activa.
+- Detección de movimiento durante sesión activa con fusión de sensores.
+- Validación de disponibilidad de giroscopio al inicializar la app.
+- Sensibilidad configurable en 4 niveles.
+- Notificaciones locales por evento de sesión con preferencias granulares.
 
 Pendiente o parcial respecto al documento:
 - Foreground service en Android.
-- Notificaciones locales.
 - Modo estricto con LockTask.
 - Compras integradas.
-- Consentimiento normativo y política de privacidad en onboarding.
 - Exportación y borrado total de datos desde UI.
 
 ## Nota
 Requisito obligatorio de la ementa:
-- La integración de sensores con la interfaz se evidencia en RF-02 (monitoreo del giroscopio y ruptura de foco).
-- En estas funcionalidades, los eventos del giroscopio cambian en tiempo real el estado de la sesión, el combo y la UI.
+- La integración de sensores con la interfaz se evidencia en RF-02 (monitoreo de sensores y ruptura de foco).
+- En estas funcionalidades, los eventos de acelerómetro, giroscopio y acelerómetro lineal cambian en tiempo real el estado de la sesión, el combo y la UI.

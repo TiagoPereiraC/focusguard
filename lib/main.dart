@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 
+import 'model/focus_sensitivity_mode.dart';
+import 'model/notification_preferences.dart';
 import 'model/stats_repository.dart';
 import 'services/notification_service.dart';
 import 'theme/app_palette.dart';
@@ -12,6 +14,13 @@ import 'views/pages/tos_dialog.dart';
 
 const String _themeModePrefKey = 'theme_mode';
 const String _tosAcceptedPrefKey = 'tos_accepted';
+const String _notifStartedPrefKey = 'notif_session_started';
+const String _notifResumedPrefKey = 'notif_session_resumed';
+const String _notifPausedPrefKey = 'notif_session_paused';
+const String _notifResetPrefKey = 'notif_session_reset';
+const String _notifCompletedPrefKey = 'notif_session_completed';
+const String _notifInterruptedPrefKey = 'notif_session_interrupted';
+const String _sensitivityModePrefKey = 'focus_sensitivity_mode';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +52,11 @@ class FocusGuardApp extends StatefulWidget {
 
 class _FocusGuardAppState extends State<FocusGuardApp> {
   late final FocusViewModel _focusViewModel;
+  final NotificationService _notificationService = NotificationService();
   late ThemeMode _themeMode;
+  NotificationPreferences _notificationPreferences =
+      const NotificationPreferences();
+  FocusSensitivityMode _sensitivityMode = FocusSensitivityMode.balanced;
   bool _prefsLoaded = false;
   late bool _tosAccepted;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
@@ -51,7 +64,12 @@ class _FocusGuardAppState extends State<FocusGuardApp> {
   @override
   void initState() {
     super.initState();
-    _focusViewModel = FocusViewModel(repository: StatsRepository());
+    _focusViewModel = FocusViewModel(
+      repository: StatsRepository(),
+      notificationService: _notificationService,
+      notificationPreferences: _notificationPreferences,
+      sensitivityMode: _sensitivityMode,
+    );
     _themeMode = widget.initialThemeMode;
     _tosAccepted = true;
     _loadInitialPreferences();
@@ -60,9 +78,27 @@ class _FocusGuardAppState extends State<FocusGuardApp> {
   Future<void> _loadInitialPreferences() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? storedTheme = prefs.getString(_themeModePrefKey);
+    final String? storedSensitivity = prefs.getString(_sensitivityModePrefKey);
     final bool tosAccepted = prefs.getBool(_tosAcceptedPrefKey) ?? false;
+    final NotificationPreferences loadedNotificationPreferences =
+        NotificationPreferences(
+          sessionStarted: prefs.getBool(_notifStartedPrefKey) ?? true,
+          sessionResumed: prefs.getBool(_notifResumedPrefKey) ?? true,
+          sessionPaused: prefs.getBool(_notifPausedPrefKey) ?? true,
+          sessionReset: prefs.getBool(_notifResetPrefKey) ?? true,
+          sessionCompleted: prefs.getBool(_notifCompletedPrefKey) ?? true,
+          sessionInterrupted: prefs.getBool(_notifInterruptedPrefKey) ?? true,
+        );
 
     ThemeMode resolvedThemeMode = _themeMode;
+    FocusSensitivityMode resolvedSensitivityMode = _sensitivityMode;
+    if (storedSensitivity != null) {
+      resolvedSensitivityMode = FocusSensitivityMode.values.firstWhere(
+        (FocusSensitivityMode mode) => mode.name == storedSensitivity,
+        orElse: () => FocusSensitivityMode.balanced,
+      );
+    }
+
     if (storedTheme == ThemeMode.dark.name) {
       resolvedThemeMode = ThemeMode.dark;
     } else if (storedTheme == ThemeMode.light.name) {
@@ -78,8 +114,12 @@ class _FocusGuardAppState extends State<FocusGuardApp> {
     setState(() {
       _themeMode = resolvedThemeMode;
       _tosAccepted = tosAccepted;
+      _notificationPreferences = loadedNotificationPreferences;
+      _sensitivityMode = resolvedSensitivityMode;
       _prefsLoaded = true;
     });
+    _focusViewModel.updateNotificationPreferences(loadedNotificationPreferences);
+    _focusViewModel.updateSensitivityMode(resolvedSensitivityMode);
 
     if (!_tosAccepted) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _checkToS());
@@ -125,6 +165,49 @@ class _FocusGuardAppState extends State<FocusGuardApp> {
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeModePrefKey, newThemeMode.name);
+  }
+
+  String _prefKeyForNotificationType(NotificationPreferenceType type) {
+    switch (type) {
+      case NotificationPreferenceType.sessionStarted:
+        return _notifStartedPrefKey;
+      case NotificationPreferenceType.sessionResumed:
+        return _notifResumedPrefKey;
+      case NotificationPreferenceType.sessionPaused:
+        return _notifPausedPrefKey;
+      case NotificationPreferenceType.sessionReset:
+        return _notifResetPrefKey;
+      case NotificationPreferenceType.sessionCompleted:
+        return _notifCompletedPrefKey;
+      case NotificationPreferenceType.sessionInterrupted:
+        return _notifInterruptedPrefKey;
+    }
+  }
+
+  Future<void> _updateNotificationPreference(
+    NotificationPreferenceType type,
+    bool enabled,
+  ) async {
+    final NotificationPreferences updatedPreferences =
+        _notificationPreferences.setValue(type, enabled);
+
+    setState(() {
+      _notificationPreferences = updatedPreferences;
+    });
+    _focusViewModel.updateNotificationPreferences(updatedPreferences);
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefKeyForNotificationType(type), enabled);
+  }
+
+  Future<void> _updateSensitivityMode(FocusSensitivityMode mode) async {
+    setState(() {
+      _sensitivityMode = mode;
+    });
+    _focusViewModel.updateSensitivityMode(mode);
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_sensitivityModePrefKey, mode.name);
   }
 
   @override
@@ -218,6 +301,10 @@ class _FocusGuardAppState extends State<FocusGuardApp> {
         onToggleTheme: _toggleTheme,
         tosAccepted: _tosAccepted,
         onSetTosAccepted: _setTosAccepted,
+        notificationPreferences: _notificationPreferences,
+        onUpdateNotificationPreference: _updateNotificationPreference,
+        sensitivityMode: _sensitivityMode,
+        onUpdateSensitivityMode: _updateSensitivityMode,
       ),
     );
   }
